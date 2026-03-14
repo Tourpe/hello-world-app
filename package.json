@@ -1,0 +1,26 @@
+{
+  "name": "hello-world-app",
+  "version": "1.0.0",
+  "description": "A visually stunning and engaging Hello World application.",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "live-server src",
+    "build": "echo 'Build step not defined yet.'"
+  },
+  "keywords": [
+    "hello",
+    "world",
+    "animation",
+    "interactive",
+    "web"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "animejs": "^3.2.1",
+    "normalize.css": "^8.0.1"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.1"
+  }
+}

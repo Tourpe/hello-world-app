@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World: Front Page Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <button id="easterGuideToggle" class="easter-toggle" aria-label="Open easter egg guide" title="Easter egg guide">
+        <span class="egg-icon" aria-hidden="true"></span>
+    </button>
+
+    <aside id="easterGuide" class="easter-guide" hidden>
+        <div class="easter-guide-header">
+            <h2>Secret Menu</h2>
+            <button id="easterGuideClose" class="easter-close" aria-label="Close easter egg guide">x</button>
+        </div>
+        <p>Use these discreet controls to trigger secret effects:</p>
+        <div class="secret-menu-grid">
+            <button id="secretStormButton" class="secret-menu-btn">Storm Broadcast</button>
+            <button id="secretZeroButton" class="secret-menu-btn">Zero Gravity</button>
+            <button id="secretTimelineButton" class="secret-menu-btn">Cinematic Timeline</button>
+            <button id="secretReplayButton" class="secret-menu-btn">Replay Last 8s</button>
+        </div>
+    </aside>
+
+    <div class="intro-gate" id="introGate" role="dialog" aria-label="Launch intro">
+        <p class="intro-kicker">Broadcast System Ready</p>
+        <h1>HELLO WORLD<br>LIVE EDITION</h1>
+        <p class="intro-copy">Press go live to trigger the opening sequence.</p>
+        <button id="goLiveButton">Go Live</button>
+    </div>
+
+    <div class="signal-beams" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div class="noise-layer" aria-hidden="true"></div>
+
+    <header class="ticker" aria-label="Breaking updates">
+        <span class="ticker-label">Breaking</span>
+        <div class="ticker-viewport">
+            <div class="ticker-track" id="tickerTrack">
+                <span>Hello World now trending across every major feed.</span>
+                <span>Developers call this the loudest launch of the year.</span>
+                <span>Realtime metrics confirm attention spikes worldwide.</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="stage">
+        <section class="hero">
+            <p class="eyebrow"><span class="dot"></span>Global Tech Bulletin</p>
+            <h1 class="headline" id="headline">
+                <span>Hello</span>
+                <span>World</span>
+                <span>Hits</span>
+                <span>Prime Time</span>
+            </h1>
+            <p class="subhead" id="subhead">
+                The internet asked for a simple greeting. It got a full front-page moment.
+            </p>
+
+            <div class="cta-row">
+                <button id="launchButton">Launch Headline</button>
+                <button id="refreshButton" class="secondary">Regenerate Buzz</button>
+                <button id="timelineButton" class="secondary">Run Cinematic Timeline</button>
+                <button id="replayButton" class="secondary">Replay Last 8s</button>
+            </div>
+        </section>
+
+        <section class="metrics" aria-label="Live metrics">
+            <article class="metric-card">
+                <p class="metric-label">Live Viewers</p>
+                <p class="metric-value" id="viewerCount">0</p>
+            </article>
+            <article class="metric-card">
+                <p class="metric-label">Countries Watching</p>
+                <p class="metric-value" id="countryCount">0</p>
+            </article>
+            <article class="metric-card">
+                <p class="metric-label">Mentions Per Minute</p>
+                <p class="metric-value" id="mentionCount">0</p>
+            </article>
+        </section>
+
+        <section class="command-room" aria-label="Broadcast controls">
+            <article class="control-card">
+                <p class="metric-label">Heat Index</p>
+                <div class="heat-track" aria-hidden="true">
+                    <span id="heatFill"></span>
+                </div>
+                <p class="heat-value"><span id="heatValue">0</span>% explosive momentum</p>
+            </article>
+
+            <article class="control-card">
+                <p class="metric-label">Broadcast Presets</p>
+                <div class="mode-row">
+                    <button class="mode-chip active" data-mode="alert">Alert Desk</button>
+                    <button class="mode-chip" data-mode="orbit">Orbit View</button>
+                    <button class="mode-chip" data-mode="sunrise">Sunrise Show</button>
+                </div>
+            </article>
+
+            <article class="control-card">
+                <p class="metric-label">Director Console</p>
+                <div class="mode-row">
+                    <button id="stormModeButton" class="mode-chip">Storm Broadcast</button>
+                    <button id="gravityModeButton" class="mode-chip">Zero Gravity</button>
+                    <button id="captionsToggle" class="mode-chip">Audio Captions On</button>
+                </div>
+            </article>
+        </section>
+
+        <section class="event-map" aria-label="Global event map">
+            <div class="map-header">
+                <h2>Global Event Map</h2>
+                <p id="mapStatus">Signals syncing worldwide</p>
+            </div>
+            <div class="map-grid" id="eventMap">
+                <span class="map-node" data-city="San Francisco"></span>
+                <span class="map-node" data-city="Sao Paulo"></span>
+                <span class="map-node" data-city="London"></span>
+                <span class="map-node" data-city="Lagos"></span>
+                <span class="map-node" data-city="Dubai"></span>
+                <span class="map-node" data-city="Mumbai"></span>
+                <span class="map-node" data-city="Singapore"></span>
+                <span class="map-node" data-city="Sydney"></span>
+            </div>
+        </section>
+
+        <section class="feed" aria-live="polite">
+            <h2>Live Wire</h2>
+            <ul id="liveFeed">
+                <li>Producers confirm this launch is still only version 1.</li>
+                <li>Audience sentiment: "Unexpectedly epic for a hello world."</li>
+                <li>Studios request rights to adapt this into an opening sequence.</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="footnote">
+        Front page refreshed <span id="timestamp"></span>
+    </footer>
+
+    <aside class="audio-captions" id="audioCaptions" aria-live="polite"></aside>
+
+    <script src="scripts/app.js"></script>
+</body>
+</html>
