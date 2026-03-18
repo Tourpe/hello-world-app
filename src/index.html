@@ -4,16 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hello World: Front Page Edition</title>
+    <!-- Google Fonts: Display and body typefaces -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Application stylesheet -->
     <link rel="stylesheet" href="styles/style.css">
 </head>
 <body>
+    <!-- Easter Egg Guide Toggle Button -->
     <button id="easterGuideToggle" class="easter-toggle" aria-label="Open easter egg guide" title="Easter egg guide">
         <span class="egg-icon" aria-hidden="true"></span>
     </button>
 
+    <!-- Easter Egg Guide: Secret menu for advanced features -->
     <aside id="easterGuide" class="easter-guide" hidden>
         <div class="easter-guide-header">
             <h2>Secret Menu</h2>
@@ -28,6 +32,7 @@
         </div>
     </aside>
 
+    <!-- Intro Gate: Initial onboarding screen -->
     <div class="intro-gate" id="introGate" role="dialog" aria-label="Launch intro">
         <p class="intro-kicker">Broadcast System Ready</p>
         <h1>HELLO WORLD<br>LIVE EDITION</h1>
@@ -35,6 +40,7 @@
         <button id="goLiveButton">Go Live</button>
     </div>
 
+    <!-- Cinematic Background Elements -->
     <div class="signal-beams" aria-hidden="true">
         <span></span>
         <span></span>

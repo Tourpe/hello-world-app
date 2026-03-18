@@ -1,26 +1,42 @@
 {
   "name": "hello-world-app",
   "version": "1.0.0",
-  "description": "A visually stunning and engaging Hello World application.",
+  "description": "A visually stunning and engaging Hello World application with cinematic animations, adaptive audio synthesis, and interactive UI elements.",
   "main": "src/index.html",
   "scripts": {
-    "start": "live-server src",
+    "start": "npx live-server src",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "build": "echo 'Build step not defined yet.'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/hello-world-app"
   },
   "keywords": [
     "hello",
     "world",
     "animation",
     "interactive",
-    "web"
+    "web",
+    "audio",
+    "cinematic",
+    "broadcast"
   ],
-  "author": "Your Name",
+  "author": "Herve Tourpe",
   "license": "MIT",
   "dependencies": {
     "animejs": "^3.2.1",
     "normalize.css": "^8.0.1"
   },
   "devDependencies": {
+    "jest": "^29.5.0",
     "live-server": "^1.2.1"
-  }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "defaults"
+  ]
 }

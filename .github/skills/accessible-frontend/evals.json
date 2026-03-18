@@ -1,0 +1,23 @@
+{
+  "skill_name": "imf-visual-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build me a React component for a document status badge. It should show whether a board document is Draft, Under Review, Approved, or Rejected. Make it look professional and consistent with our IMF branding.",
+      "expected_output": "A React component using only approved IMF palette colours, with semantic colour choices flagged for review (since no official mapping exists yet). Should use aria attributes or semantic HTML for status communication. Should check for a tech-stack skill and, if absent, propose Fluent UI or plain HTML options and wait for validation.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I need a data visualisation showing voting power distribution across IMF member countries. Create a horizontal bar chart component. It needs to be accessible and on-brand.",
+      "expected_output": "A chart component using only approved palette colours in a deliberate categorical order. Should include non-colour differentiators (patterns or labels) per accessibility rules. Fund blue should be visually dominant. Should load both brand and accessibility references. Colour choices should be flagged for review given the missing semantic mapping.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Create a modal dialog for confirming the deletion of a board agenda item. It should follow our design standards.",
+      "expected_output": "A modal with focus trapping, Escape-key dismissal, keyboard accessibility, and explicit destructive-action warning per UX rules. Should use approved palette colours only (e.g. Red for destructive action, Fund blue for cancel/safe action). Should load all three references (brand, accessibility, UX). Should propose component choices and wait for stack validation if no tech-stack skill is found.",
+      "files": []
+    }
+  ]
+}
