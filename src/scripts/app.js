@@ -45,6 +45,7 @@ const CONFIG = {
     mapStatus: '#mapStatus',
     heatFill: '#heatFill',
     heatValue: '#heatValue',
+    mapConnections: '#mapConnections',
     modeChips: '.mode-chip[data-mode]',
     audioCaptions: '#audioCaptions',
     // Buttons
@@ -187,6 +188,7 @@ const domCache = {
   easterGuideClose: null,
   heatFill: null,
   heatValue: null,
+  mapConnections: null,
   modeChips: [],
   audioCaptions: null,
   // Buttons
@@ -366,6 +368,7 @@ const initializeDOMCache = () => {
     domCache.audioCaptions = document.querySelector(CONFIG.DOM.audioCaptions);
     domCache.heatFill = document.querySelector(CONFIG.DOM.heatFill);
     domCache.heatValue = document.querySelector(CONFIG.DOM.heatValue);
+    domCache.mapConnections = document.querySelector(CONFIG.DOM.mapConnections);
     domCache.launchButton = document.querySelector(CONFIG.DOM.launchButton);
     domCache.refreshButton = document.querySelector(CONFIG.DOM.refreshButton);
     domCache.timelineButton = document.querySelector(CONFIG.DOM.timelineButton);
@@ -413,6 +416,48 @@ const getMapStatusRef = () => domCache.mapStatus;
 const getAudioCaptionsRef = () => domCache.audioCaptions;
 const getHeatFillRef = () => domCache.heatFill;
 const getHeatValueRef = () => domCache.heatValue;
+
+/**
+ * Initialize the map connection lines between cities.
+ * Creates SVG lines that connect map nodes in a network pattern.
+ */
+const initializeMapConnections = () => {
+  const svg = domCache.mapConnections;
+  if (!svg || !eventMapNodes.length) return;
+
+  // Clear existing connections
+  svg.innerHTML = '';
+
+  // Create connections between nearby nodes (simplified network)
+  const connections = [
+    [0, 1], [0, 2], [1, 3], [2, 3], [2, 4], [3, 4], [4, 5], [5, 6], [6, 7]
+  ];
+
+  connections.forEach(([from, to]) => {
+    if (from >= eventMapNodes.length || to >= eventMapNodes.length) return;
+
+    const fromNode = eventMapNodes[from];
+    const toNode = eventMapNodes[to];
+
+    const fromRect = fromNode.getBoundingClientRect();
+    const toRect = toNode.getBoundingClientRect();
+    const mapRect = svg.getBoundingClientRect();
+
+    const x1 = fromRect.left + fromRect.width / 2 - mapRect.left;
+    const y1 = fromRect.top + fromRect.height / 2 - mapRect.top;
+    const x2 = toRect.left + toRect.width / 2 - mapRect.left;
+    const y2 = toRect.top + toRect.height / 2 - mapRect.top;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.classList.add('connection-line');
+
+    svg.appendChild(line);
+  });
+};
 
 // ============================================================================
 // UTILITIES: Primitive operations
@@ -722,6 +767,19 @@ const updateMapByMentions = (mentions) => {
       node.classList.add('is-hot');
     }
   });
+
+  // Activate connection lines for active nodes
+  const svg = domCache.mapConnections;
+  if (svg) {
+    const lines = svg.querySelectorAll('line');
+    lines.forEach((line, index) => {
+      if (index < activeCount - 1) {
+        line.classList.add('is-active');
+      } else {
+        line.classList.remove('is-active');
+      }
+    });
+  }
 
   const hotCity = eventMapNodes[Math.floor(Math.random() * activeCount)].dataset.city;
   getMapStatusRef().textContent = `Hot signal near ${hotCity}`;
@@ -1479,6 +1537,9 @@ const toggleEasterGuide = () => {
 const initialize = () => {
   // Initialize DOM cache (fail-fast if required elements missing)
   initializeDOMCache();
+
+  // Initialize map connections
+  initializeMapConnections();
 
   // Set up button event listeners
   getElement('launchButton').addEventListener('click', () => runLaunchMoment());

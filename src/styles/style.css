@@ -588,6 +588,35 @@ button.secondary {
     padding: 1rem 1.1rem;
 }
 
+.map-container {
+    position: relative;
+}
+
+.map-connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.map-connections line {
+    stroke: rgba(47, 232, 255, 0.3);
+    stroke-width: 1;
+    opacity: 0;
+    animation: connectionPulse 2000ms ease-in-out infinite;
+}
+
+.map-connections line.is-active {
+    opacity: 1;
+}
+
+@keyframes connectionPulse {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.6; }
+}
+
 .map-header {
     display: flex;
     align-items: baseline;

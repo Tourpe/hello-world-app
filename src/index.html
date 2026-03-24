@@ -129,15 +129,20 @@
                 <h2>Global Event Map</h2>
                 <p id="mapStatus">Signals syncing worldwide</p>
             </div>
-            <div class="map-grid" id="eventMap">
-                <span class="map-node" data-city="San Francisco"></span>
-                <span class="map-node" data-city="Sao Paulo"></span>
-                <span class="map-node" data-city="London"></span>
-                <span class="map-node" data-city="Lagos"></span>
-                <span class="map-node" data-city="Dubai"></span>
-                <span class="map-node" data-city="Mumbai"></span>
-                <span class="map-node" data-city="Singapore"></span>
-                <span class="map-node" data-city="Sydney"></span>
+            <div class="map-container">
+                <svg class="map-connections" id="mapConnections" aria-hidden="true">
+                    <!-- Connection lines will be dynamically added here -->
+                </svg>
+                <div class="map-grid" id="eventMap">
+                    <span class="map-node" data-city="San Francisco"></span>
+                    <span class="map-node" data-city="Sao Paulo"></span>
+                    <span class="map-node" data-city="London"></span>
+                    <span class="map-node" data-city="Lagos"></span>
+                    <span class="map-node" data-city="Dubai"></span>
+                    <span class="map-node" data-city="Mumbai"></span>
+                    <span class="map-node" data-city="Singapore"></span>
+                    <span class="map-node" data-city="Sydney"></span>
+                </div>
             </div>
         </section>
 
