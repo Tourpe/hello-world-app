@@ -33,7 +33,7 @@ const CONFIG = {
   // UI Element Query Selectors
   DOM: {
     headline: '#headline',
-    eventMapNodes: '.map-node',
+    eventMapNodes: '.globe-point',
     viewerCount: '#viewerCount',
     countryCount: '#countryCount',
     mentionCount: '#mentionCount',

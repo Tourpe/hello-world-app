@@ -1,0 +1,5 @@
+2026-03-23: Added animated connection network to global event map
+- Implemented SVG-based connection lines between city nodes
+- Connections activate and pulse based on mention activity levels
+- Creates a dynamic network visualization that enhances the "signals syncing worldwide" theme
+- Improves user engagement with visible network effects during high activity

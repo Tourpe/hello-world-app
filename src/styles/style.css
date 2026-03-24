@@ -637,7 +637,7 @@ button.secondary {
     font-size: 0.85rem;
 }
 
-.map-grid {
+.globe {
     position: relative;
     margin-top: 0.8rem;
     min-height: 180px;
@@ -647,20 +647,19 @@ button.secondary {
         radial-gradient(400px 150px at 20% 20%, rgba(255, 255, 255, 0.05), transparent 80%),
         linear-gradient(120deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
     overflow: hidden;
+    perspective: 1000px;
 }
 
-.map-grid::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-    background-size: 28px 28px;
-    opacity: 0.6;
+.globe-sphere {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+    transform-style: preserve-3d;
+    animation: globeRotate 20s infinite linear;
 }
 
-.map-node {
+.globe-point {
     --active-scale: 1;
     position: absolute;
     width: 10px;
@@ -670,13 +669,10 @@ button.secondary {
     box-shadow: 0 0 0 0 rgba(47, 232, 255, 0.5);
     transform: scale(var(--active-scale));
     transition: transform 260ms ease;
+    transform-origin: 50% 50% 0;
 }
 
-.map-node.is-hot {
-    animation: nodePulse 1200ms ease;
-}
-
-.map-node::after {
+.globe-point::after {
     content: attr(data-city);
     position: absolute;
     left: 50%;
@@ -687,14 +683,34 @@ button.secondary {
     color: rgba(255, 255, 255, 0.72);
 }
 
-.map-node:nth-child(1) { left: 14%; top: 38%; }
-.map-node:nth-child(2) { left: 28%; top: 67%; }
-.map-node:nth-child(3) { left: 45%; top: 28%; }
-.map-node:nth-child(4) { left: 49%; top: 57%; }
-.map-node:nth-child(5) { left: 59%; top: 42%; }
-.map-node:nth-child(6) { left: 67%; top: 52%; }
-.map-node:nth-child(7) { left: 76%; top: 58%; }
-.map-node:nth-child(8) { left: 85%; top: 76%; }
+.globe-point.is-hot {
+    animation: nodePulse 1200ms ease;
+}
+
+.globe-point:nth-child(1) { /* San Francisco */
+    transform: rotateY(-122.4194deg) rotateX(-37.7749deg) translateZ(80px);
+}
+.globe-point:nth-child(2) { /* Sao Paulo */
+    transform: rotateY(-46.6333deg) rotateX(23.5505deg) translateZ(80px);
+}
+.globe-point:nth-child(3) { /* London */
+    transform: rotateY(-0.1278deg) rotateX(-51.5074deg) translateZ(80px);
+}
+.globe-point:nth-child(4) { /* Lagos */
+    transform: rotateY(3.3792deg) rotateX(-6.5244deg) translateZ(80px);
+}
+.globe-point:nth-child(5) { /* Dubai */
+    transform: rotateY(55.2708deg) rotateX(-25.2048deg) translateZ(80px);
+}
+.globe-point:nth-child(6) { /* Mumbai */
+    transform: rotateY(72.8777deg) rotateX(-19.0760deg) translateZ(80px);
+}
+.globe-point:nth-child(7) { /* Singapore */
+    transform: rotateY(103.8198deg) rotateX(-1.3521deg) translateZ(80px);
+}
+.globe-point:nth-child(8) { /* Sydney */
+    transform: rotateY(151.2093deg) rotateX(33.8688deg) translateZ(80px);
+}
 
 .audio-captions {
     position: fixed;
@@ -993,6 +1009,11 @@ button.secondary {
     50% { transform: translateX(-2px) translateY(1px); }
     75% { transform: translateX(1px) translateY(-2px); }
     100% { transform: translateX(0) translateY(0); }
+}
+
+@keyframes globeRotate {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
 }
 
 @media (max-width: 900px) {
