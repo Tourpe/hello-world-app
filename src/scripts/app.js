@@ -66,7 +66,11 @@ const CONFIG = {
     secretStormButton: '#secretStormButton',
     secretZeroButton: '#secretZeroButton',
     secretTimelineButton: '#secretTimelineButton',
-    secretReplayButton: '#secretReplayButton'
+    secretReplayButton: '#secretReplayButton',
+    secretViralButton: '#secretViralButton',
+    // Viral alert overlay
+    viralOverlay: '#viralOverlay',
+    viralCounter: '#viralCounter'
   },
 
   // Audio Configuration
@@ -89,6 +93,16 @@ const CONFIG = {
     beatsPerMinuteActivityCoeff: 12,
     beatMinInterval: 220,
     hoverScaleFrequencies: [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25]
+  },
+
+  // Viral Alert Configuration
+  VIRAL: {
+    heatThreshold: 88,
+    autoTriggerChance: 0.15,
+    cooldownMs: 45000,
+    displayDurationMs: 5200,
+    counterTarget: 12450000,
+    counterDurationMs: 4000
   },
 
   // Animation & Timing Configuration
@@ -205,7 +219,11 @@ const domCache = {
   secretStormButton: null,
   secretZeroButton: null,
   secretTimelineButton: null,
-  secretReplayButton: null
+  secretReplayButton: null,
+  secretViralButton: null,
+  // Viral alert
+  viralOverlay: null,
+  viralCounter: null
 };
 
 
@@ -299,6 +317,8 @@ let idleModeActive = false;
 let idleIndex = 0;
 
 let isEasterGuideOpen = false;
+let isViralAlertActive = false;
+let lastViralAlertTime = -Infinity;
 
 const metricsState = {
   viewers: 0,
@@ -385,6 +405,9 @@ const initializeDOMCache = () => {
     domCache.secretZeroButton = document.querySelector(CONFIG.DOM.secretZeroButton);
     domCache.secretTimelineButton = document.querySelector(CONFIG.DOM.secretTimelineButton);
     domCache.secretReplayButton = document.querySelector(CONFIG.DOM.secretReplayButton);
+    domCache.secretViralButton = document.querySelector(CONFIG.DOM.secretViralButton);
+    domCache.viralOverlay = document.querySelector(CONFIG.DOM.viralOverlay);
+    domCache.viralCounter = document.querySelector(CONFIG.DOM.viralCounter);
     domCache.modeChips = Array.from(document.querySelectorAll(CONFIG.DOM.modeChips));
 
     // Cache event map nodes
@@ -979,6 +1002,15 @@ const refreshMetrics = (intensity = 1) => {
   getHeatFillRef().style.width = `${currentHeat}%`;
   getHeatValueRef().textContent = String(currentHeat);
   updateMapByMentions(mentions);
+
+  // Auto-trigger viral alert when heat is critical (rare chance, with cooldown)
+  if (
+    currentHeat >= CONFIG.VIRAL.heatThreshold &&
+    Math.random() < CONFIG.VIRAL.autoTriggerChance &&
+    performance.now() - lastViralAlertTime >= CONFIG.VIRAL.cooldownMs
+  ) {
+    setTimeout(triggerViralAlert, 400);
+  }
 };
 
 /**
@@ -1190,6 +1222,80 @@ const activateZeroGravity = () => {
   prependFeedItem('Zero Gravity letters activated.');
   showCaption('Zero gravity field engaged');
   logEvent('zero');
+};
+
+/**
+ * Trigger the viral surge alert overlay.
+ *
+ * Shows a full-viewport "GOING VIRAL" takeover with a spinning impressions
+ * counter, pulsing border, and scanline effects. Auto-dismisses after
+ * CONFIG.VIRAL.displayDurationMs. A cooldown prevents back-to-back triggers.
+ */
+const triggerViralAlert = () => {
+  if (isViralAlertActive) {
+    return;
+  }
+
+  const now = performance.now();
+  if (now - lastViralAlertTime < CONFIG.VIRAL.cooldownMs) {
+    return;
+  }
+
+  const overlay = domCache.viralOverlay;
+  const counter = domCache.viralCounter;
+  if (!overlay || !counter) {
+    return;
+  }
+
+  isViralAlertActive = true;
+  lastViralAlertTime = now;
+
+  // Spike all metrics and activate all globe nodes
+  refreshMetrics(1.5);
+  blastParticles();
+  cameraCue('zoom', 1400);
+  prependFeedItem('VIRAL ALERT: Signal has saturated all networks. Peak broadcast moment recorded.');
+  stampTime();
+  logEvent('viral');
+  showCaption('Going viral — peak broadcast moment');
+
+  // Show overlay
+  overlay.hidden = false;
+  counter.textContent = '0 IMPRESSIONS';
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('is-active');
+  });
+
+  // Animate counter from 0 to target
+  const startTime = performance.now();
+  const target = CONFIG.VIRAL.counterTarget;
+  const duration = CONFIG.VIRAL.counterDurationMs;
+
+  const animateCounter = (ts) => {
+    const elapsed = ts - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 4);
+    const value = Math.round(eased * target);
+    counter.textContent = `${new Intl.NumberFormat('en-US').format(value)} IMPRESSIONS`;
+
+    if (progress < 1) {
+      requestAnimationFrame(animateCounter);
+    }
+  };
+
+  requestAnimationFrame(animateCounter);
+
+  // Auto-dismiss
+  setTimeout(() => {
+    overlay.classList.remove('is-active');
+    setTimeout(() => {
+      overlay.hidden = true;
+      isViralAlertActive = false;
+      prependFeedItem('Viral surge subsiding. Broadcast returning to regular cadence.');
+      stampTime();
+    }, 320);
+  }, CONFIG.VIRAL.displayDurationMs);
 };
 
 /**
@@ -1458,6 +1564,10 @@ const runCinematicTimeline = async () => {
   prependFeedItem('Timeline finale reached maximum broadcast intensity.');
   showCaption('Finale crescendo');
 
+  // Climax: fire the viral alert at the peak of the timeline
+  lastViralAlertTime = -Infinity;
+  triggerViralAlert();
+
   await wait(CONFIG.ANIMATION.timelineFinalDuration);
   isTimelineRunning = false;
   timelineButton.disabled = false;
@@ -1604,6 +1714,15 @@ const initialize = () => {
     event.stopPropagation();
     replayLastMoments();
   });
+
+  if (domCache.secretViralButton) {
+    domCache.secretViralButton.addEventListener('click', (event) => {
+      registerActivity();
+      event.stopPropagation();
+      lastViralAlertTime = -Infinity; // bypass cooldown for manual trigger
+      triggerViralAlert();
+    });
+  }
 
   // Set up global interaction listeners
   document.addEventListener('pointermove', onPointerMove);

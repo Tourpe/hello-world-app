@@ -29,6 +29,7 @@
             <button id="secretZeroButton" class="secret-menu-btn">Zero Gravity</button>
             <button id="secretTimelineButton" class="secret-menu-btn">Cinematic Timeline</button>
             <button id="secretReplayButton" class="secret-menu-btn">Replay Last 8s</button>
+            <button id="secretViralButton" class="secret-menu-btn viral-btn">Viral Surge</button>
         </div>
     </aside>
 
@@ -38,6 +39,17 @@
         <h1>HELLO WORLD<br>LIVE EDITION</h1>
         <p class="intro-copy">Press go live to trigger the opening sequence.</p>
         <button id="goLiveButton">Go Live</button>
+    </div>
+
+    <!-- Viral Alert Overlay: Fires when broadcast reaches critical viral threshold -->
+    <div id="viralOverlay" class="viral-overlay" role="status" aria-atomic="true" hidden>
+        <div class="viral-scanlines" aria-hidden="true"></div>
+        <div class="viral-content">
+            <p class="viral-kicker">BROADCAST PEAK DETECTED</p>
+            <h2 class="viral-headline">GOING<br>VIRAL</h2>
+            <p class="viral-counter" id="viralCounter">0 IMPRESSIONS</p>
+            <p class="viral-note">Signal saturating all networks</p>
+        </div>
     </div>
 
     <!-- Cinematic Background Elements -->

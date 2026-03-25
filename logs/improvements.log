@@ -10,6 +10,15 @@
 - Positions cities accurately on globe surface using latitude/longitude coordinates
 - Enhances visual impact with cutting-edge 3D web technology, potentially newsworthy for innovative UI
 
+2026-03-24: Added Viral Surge Alert — full-viewport "GOING VIRAL" takeover overlay
+- Fires automatically when heat index crosses 88% (15% chance, 45s cooldown)
+- Triggers at the climax of the Cinematic Timeline for maximum drama
+- Available manually via new "Viral Surge" button in the Secret Menu
+- Displays a cinematic full-screen overlay: scanlines, pulsing red border, giant "GOING VIRAL" headline
+- Counter animates from 0 to 12,450,000 IMPRESSIONS over ~4 seconds
+- Spikes all metrics to peak and blasts particles; auto-dismisses after ~5 seconds
+- Represents the moment every broadcast dreams of — the exact instant content saturates all networks
+
 2026-03-24: Upgraded headline ticker to breaking-glow marquee
 - Accelerated ticker scroll speed from 24s to 16s loop
 - Added `pulse-highlight` glow animation to one random headline per refresh
