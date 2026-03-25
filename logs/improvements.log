@@ -3,3 +3,9 @@
 - Connections activate and pulse based on mention activity levels
 - Creates a dynamic network visualization that enhances the "signals syncing worldwide" theme
 - Improves user engagement with visible network effects during high activity
+
+2026-03-23: Transformed global event map into interactive 3D rotating globe
+- Replaced 2D grid layout with CSS 3D sphere positioning city nodes
+- Added continuous rotation animation for immersive global view
+- Positions cities accurately on globe surface using latitude/longitude coordinates
+- Enhances visual impact with cutting-edge 3D web technology, potentially newsworthy for innovative UI

@@ -275,13 +275,38 @@ body {
     gap: 2.5rem;
     white-space: nowrap;
     color: var(--muted);
-    animation: marquee 24s linear infinite;
+    animation: marquee 16s linear infinite;
 }
 
 .ticker-track span::after {
     content: "//";
     margin-left: 2.5rem;
     color: rgba(255, 255, 255, 0.35);
+}
+
+.ticker-track span.pulse-highlight {
+    color: var(--accent-hot);
+    text-shadow:
+        0 0 8px rgba(255, 194, 65, 0.8),
+        0 0 18px rgba(255, 104, 0, 0.6),
+        0 0 24px rgba(255, 52, 0, 0.5);
+    animation: tickerGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes tickerGlow {
+    0%, 100% {
+        color: var(--accent-hot);
+        text-shadow:
+            0 0 4px rgba(255, 194, 65, 0.8),
+            0 0 12px rgba(255, 104, 0, 0.6);
+    }
+    50% {
+        color: #ffffff;
+        text-shadow:
+            0 0 10px rgba(255, 255, 255, 0.9),
+            0 0 20px rgba(255, 132, 45, 0.8),
+            0 0 30px rgba(255, 69, 0, 0.7);
+    }
 }
 
 .stage {

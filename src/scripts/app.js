@@ -745,7 +745,7 @@ const scheduleAdaptiveBeat = () => {
  */
 const refreshTicker = (lead = 'Hello World now trending across every major feed.') => {
   const all = [lead, ...CONTENT.tickerPool.sort(() => Math.random() - 0.5).slice(0, CONFIG.UI.tickerGeneratedCount)];
-  getTickerTrackRef().innerHTML = all.map((line) => `<span>${line}</span>`).join('');
+  getTickerTrackRef().innerHTML = all.map((line, idx) => `<span class="${idx === Math.floor(Math.random() * all.length) ? 'pulse-highlight' : ''}">${line}</span>`).join('');
 };
 
 /**
