@@ -7,11 +7,12 @@
     "start": "npx live-server src",
     "test": "jest",
     "test:watch": "jest --watch",
-    "build": "echo 'Build step not defined yet.'"
+    "build": "echo 'Build step not defined yet.'",
+    "improve-randomly": "node scripts/improve-randomly.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/hello-world-app"
+    "url": "https://github.com/Tourpe/hello-world-app"
   },
   "keywords": [
     "hello",
