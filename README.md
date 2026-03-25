@@ -59,6 +59,12 @@ The app will open at `http://localhost:8080` with live-reload enabled.
 - If inactive for 6.5 seconds, the app engages with a beacon sequence
 - Glyphs are highlighted and pinged with audio to re-engage the user
 
+### 🤖 Auto-Improve Workflow
+- Scheduled every 6 hours via GitHub Actions (`.github/workflows/improverandomly.yml`)
+- Runs `npm run improve-randomly`, which logs activity, validates via tests, and preserves state
+- Automatically commits and pushes improvements when source changes are generated
+- Allows manual trigger via `workflow_dispatch` in GitHub Actions UI
+
 ## Architecture
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed technical documentation, design patterns, and extension guidelines.
