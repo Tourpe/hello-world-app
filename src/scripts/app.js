@@ -70,7 +70,11 @@ const CONFIG = {
     secretViralButton: '#secretViralButton',
     // Viral alert overlay
     viralOverlay: '#viralOverlay',
-    viralCounter: '#viralCounter'
+    viralCounter: '#viralCounter',
+    // Broadcast countdown overlay
+    countdownOverlay: '#countdownOverlay',
+    countdownNumber: '#countdownNumber',
+    countdownRingFill: '#countdownRingFill'
   },
 
   // Audio Configuration
@@ -223,13 +227,12 @@ const domCache = {
   secretViralButton: null,
   // Viral alert
   viralOverlay: null,
-  viralCounter: null
+  viralCounter: null,
+  // Broadcast countdown
+  countdownOverlay: null,
+  countdownNumber: null,
+  countdownRingFill: null
 };
-
-
-const viewerCount = domCache.viewerCount;
-const countryCount = domCache.countryCount;
-const mentionCount = domCache.mentionCount;
 
 // ============================================================================
 // CONTENT: Static copy and variation pools
@@ -303,6 +306,9 @@ let masterGain = null;
 let echoDelay = null;
 let echoFeedback = null;
 let musicLoopTimer = null;
+// WHY: Track the glyph-drift rAF ID so the loop can be cancelled before a
+// new one starts, preventing stacked loops if initialize() is ever called twice.
+let glyphDriftRafId = null;
 
 let captionsEnabled = true;
 let currentMode = 'alert';
@@ -319,6 +325,12 @@ let idleIndex = 0;
 let isEasterGuideOpen = false;
 let isViralAlertActive = false;
 let lastViralAlertTime = -Infinity;
+// WHY: Track the viral counter animation frame so it can be cancelled if the
+// alert is dismissed and re-triggered before the previous counter finishes.
+let viralCounterRafId = null;
+// WHY: Track the feed refresh interval so it can be cleared before a new one
+// is set, preventing stacked intervals if initialize() is called more than once.
+let feedIntervalId = null;
 
 const metricsState = {
   viewers: 0,
@@ -408,6 +420,9 @@ const initializeDOMCache = () => {
     domCache.secretViralButton = document.querySelector(CONFIG.DOM.secretViralButton);
     domCache.viralOverlay = document.querySelector(CONFIG.DOM.viralOverlay);
     domCache.viralCounter = document.querySelector(CONFIG.DOM.viralCounter);
+    domCache.countdownOverlay = document.querySelector(CONFIG.DOM.countdownOverlay);
+    domCache.countdownNumber = document.querySelector(CONFIG.DOM.countdownNumber);
+    domCache.countdownRingFill = document.querySelector(CONFIG.DOM.countdownRingFill);
     domCache.modeChips = Array.from(document.querySelectorAll(CONFIG.DOM.modeChips));
 
     // Cache event map nodes
@@ -687,20 +702,22 @@ const playHoverTone = async (letter, pan = 0) => {
 
 /**
  * Play a rich chord when user clicks on a glyph.
+ *
+ * WHY: Promise.all fires all three voices simultaneously (true chord) and
+ * awaits each one, preventing the race condition that occurred when forEach
+ * discarded the returned promises from the async playVoice calls.
  */
 const playClickChord = async (letter, pan = 0) => {
   const base = noteFromLetter(letter);
   const ratios = [1, 1.25, 1.5];
-  ratios.forEach((ratio, index) => {
-    playVoice({
-      freq: base * ratio,
-      gainPeak: CONFIG.AUDIO.clickChordDuration / (index + 1),
-      duration: CONFIG.AUDIO.clickChordDuration,
-      pan: pan + (index - 1) * 0.18,
-      type: index === 0 ? 'sawtooth' : 'triangle',
-      caption: index === 0 ? 'Impact chord' : undefined
-    });
-  });
+  await Promise.all(ratios.map((ratio, index) => playVoice({
+    freq: base * ratio,
+    gainPeak: CONFIG.AUDIO.clickChordDuration / (index + 1),
+    duration: CONFIG.AUDIO.clickChordDuration,
+    pan: pan + (index - 1) * 0.18,
+    type: index === 0 ? 'sawtooth' : 'triangle',
+    caption: index === 0 ? 'Impact chord' : undefined
+  })));
 };
 
 /**
@@ -717,22 +734,27 @@ const playBeatPulse = async () => {
   });
 
   if (currentHeat > 74) {
-    playVoice({
-      freq: base * CONFIG.AUDIO.beatPulseHighFreqMultiplier,
-      gainPeak: 0.035,
-      duration: 0.2,
-      pan: -0.2,
-      type: 'triangle'
-    });
-    setTimeout(() => {
+    // WHY: Both voices are awaited via Promise.all so playBeatPulse resolves
+    // only after all audio work is scheduled. The 100 ms stagger between the
+    // two high-heat notes is preserved inside the second promise.
+    await Promise.all([
       playVoice({
-        freq: base * 2,
-        gainPeak: 0.03,
-        duration: 0.18,
-        pan: 0.2,
+        freq: base * CONFIG.AUDIO.beatPulseHighFreqMultiplier,
+        gainPeak: 0.035,
+        duration: 0.2,
+        pan: -0.2,
         type: 'triangle'
-      });
-    }, 100);
+      }),
+      new Promise((resolve) => setTimeout(() => {
+        resolve(playVoice({
+          freq: base * 2,
+          gainPeak: 0.03,
+          duration: 0.18,
+          pan: 0.2,
+          type: 'triangle'
+        }));
+      }, 100))
+    ]);
   }
 };
 
@@ -745,13 +767,16 @@ const playBeatPulse = async () => {
 const scheduleAdaptiveBeat = () => {
   clearTimeout(musicLoopTimer);
 
-  const tick = () => {
+  // WHY: tick is async so we can await playBeatPulse. This ensures the next
+  // beat is not scheduled until the current audio work is fully dispatched,
+  // preventing beats from overlapping when the audio context is slow to start.
+  const tick = async () => {
     const bpm = CONFIG.AUDIO.beatsPerMinuteBase +
                currentHeat * CONFIG.AUDIO.beatsPerMinuteHeatCoeff +
                activityLevel * CONFIG.AUDIO.beatsPerMinuteActivityCoeff;
     const interval = Math.max(CONFIG.AUDIO.beatMinInterval, Math.round(60000 / bpm));
 
-    playBeatPulse();
+    await playBeatPulse();
     activityLevel = Math.max(0, activityLevel - CONFIG.ACTIVITY.idleDecayRate);
     musicLoopTimer = setTimeout(tick, interval);
   };
@@ -768,7 +793,11 @@ const scheduleAdaptiveBeat = () => {
  */
 const refreshTicker = (lead = 'Hello World now trending across every major feed.') => {
   const all = [lead, ...CONTENT.tickerPool.sort(() => Math.random() - 0.5).slice(0, CONFIG.UI.tickerGeneratedCount)];
-  getTickerTrackRef().innerHTML = all.map((line, idx) => `<span class="${idx === Math.floor(Math.random() * all.length) ? 'pulse-highlight' : ''}">${line}</span>`).join('');
+  // WHY: Pre-select the index once so exactly one item receives pulse-highlight.
+  // Evaluating Math.random() inside the map gave each item an independent chance,
+  // meaning zero or multiple items could be highlighted unpredictably.
+  const pulseIdx = Math.floor(Math.random() * all.length);
+  getTickerTrackRef().innerHTML = all.map((line, idx) => `<span class="${idx === pulseIdx ? 'pulse-highlight' : ''}">${line}</span>`).join('');
 };
 
 /**
@@ -778,6 +807,12 @@ const refreshTicker = (lead = 'Hello World now trending across every major feed.
  * the map status text to indicate a trending city.
  */
 const updateMapByMentions = (mentions) => {
+  // WHY: Guard prevents crash when no globe-point elements exist in the DOM
+  // (e.g. during testing or if the map section is conditionally rendered).
+  if (!eventMapNodes.length) {
+    return;
+  }
+
   const activeCount = Math.max(
     1,
     Math.min(eventMapNodes.length, Math.round((mentions / CONFIG.METRICS.mentionTargetRange[1]) * eventMapNodes.length))
@@ -841,6 +876,14 @@ const cameraCue = (mode, duration = CONFIG.ANIMATION.cameraCueDefaultDuration) =
  * Animate a number from current value to target with easing.
  */
 const animateValue = (element, target, duration) => {
+  // WHY: A zero duration would cause division by zero (Infinity), silently
+  // skipping the animation. Snap to target immediately instead.
+  if (duration <= 0) {
+    element.textContent = formatNumber(target);
+    element.dataset.value = String(target);
+    return;
+  }
+
   const start = Number(element.dataset.value || 0);
   const startedAt = performance.now();
 
@@ -936,6 +979,10 @@ const createQuantumBurst = (x, y, letter) => {
  * Trigger a wave animation across headline glyphs radiating from origin.
  */
 const triggerHeadlineWave = (originGlyph) => {
+  if (!originGlyph) {
+    return;
+  }
+
   const originRect = originGlyph.getBoundingClientRect();
   const originX = originRect.left + originRect.width / 2;
   const originY = originRect.top + originRect.height / 2;
@@ -1250,6 +1297,12 @@ const triggerViralAlert = () => {
   isViralAlertActive = true;
   lastViralAlertTime = now;
 
+  // Cancel any counter animation still running from a previous trigger
+  if (viralCounterRafId !== null) {
+    cancelAnimationFrame(viralCounterRafId);
+    viralCounterRafId = null;
+  }
+
   // Spike all metrics and activate all globe nodes
   refreshMetrics(1.5);
   blastParticles();
@@ -1280,11 +1333,13 @@ const triggerViralAlert = () => {
     counter.textContent = `${new Intl.NumberFormat('en-US').format(value)} IMPRESSIONS`;
 
     if (progress < 1) {
-      requestAnimationFrame(animateCounter);
+      viralCounterRafId = requestAnimationFrame(animateCounter);
+    } else {
+      viralCounterRafId = null;
     }
   };
 
-  requestAnimationFrame(animateCounter);
+  viralCounterRafId = requestAnimationFrame(animateCounter);
 
   // Auto-dismiss
   setTimeout(() => {
@@ -1306,6 +1361,14 @@ const triggerViralAlert = () => {
  * for organic, non-synchronous motion.
  */
 const startGlyphDrift = () => {
+  // WHY: Cancel any existing loop before starting a new one. Without this,
+  // each call to startGlyphDrift stacks an additional rAF loop, multiplying
+  // CPU cost on every re-initialisation.
+  if (glyphDriftRafId !== null) {
+    cancelAnimationFrame(glyphDriftRafId);
+    glyphDriftRafId = null;
+  }
+
   const animate = (time) => {
     driftingGlyphs.forEach((glyph, index) => {
       const gravityBoost = document.body.classList.contains('zero-gravity') ? 1.8 : 1;
@@ -1319,10 +1382,10 @@ const startGlyphDrift = () => {
       glyph.style.setProperty('--float-ry', `${Math.sin(phase) * 6.2 * gravityBoost}deg`);
     });
 
-    requestAnimationFrame(animate);
+    glyphDriftRafId = requestAnimationFrame(animate);
   };
 
-  requestAnimationFrame(animate);
+  glyphDriftRafId = requestAnimationFrame(animate);
 };
 
 // ============================================================================
@@ -1362,6 +1425,12 @@ const triggerIdleAttentionStep = () => {
 
   const glyph = driftingGlyphs[idleIndex % driftingGlyphs.length];
   idleIndex += 1;
+
+  // WHY: Array could be modified between the length check and this access
+  // (e.g. headline re-rendered mid-idle cycle), so guard defensively.
+  if (!glyph) {
+    return;
+  }
 
   const rect = glyph.getBoundingClientRect();
   const x = rect.left + rect.width / 2;
@@ -1575,16 +1644,129 @@ const runCinematicTimeline = async () => {
 };
 
 /**
- * Close the intro gate and begin the main broadcast.
+ * Play a single synthesized countdown beep.
+ *
+ * Each tick uses a sharp, punchy sine burst — frequency rises on the final
+ * beat so the listener hears the classic broadcast "4 low + 1 high" cadence.
+ *
+ * @param {number} n - Countdown value (5..1); 1 gets the high-pitched sting.
  */
-const closeIntro = () => {
+const playCountdownBeep = async (n) => {
+  await ensureAudio();
+  if (!audioContext) {
+    return;
+  }
+
+  const freq = n === 1 ? 1046.5 : 523.25; // WHY: C6 for final beat, C5 for others
+  const now = audioContext.currentTime;
+  const osc = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, now);
+
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.28, now + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + (n === 1 ? 0.38 : 0.18));
+
+  osc.connect(gain);
+  gain.connect(masterGain);
+  osc.start(now);
+  osc.stop(now + (n === 1 ? 0.4 : 0.2));
+};
+
+/**
+ * Run the 5-second TV broadcast countdown then boot the main experience.
+ *
+ * WHY: Replacing the instant closeIntro() with a dramatic countdown
+ * transforms the "Go Live" moment into a shareable, cinematic experience
+ * akin to a real network broadcast launch — the single most memorable
+ * interaction in the app.
+ */
+const runBroadcastCountdown = async () => {
+  const overlay = domCache.countdownOverlay;
+  const numEl = domCache.countdownNumber;
+  const ringFill = domCache.countdownRingFill;
+
+  // Immediately hide intro gate so the countdown fills the viewport
   getElement('introGate').classList.add('is-hidden');
+
+  if (!overlay || !numEl || !ringFill) {
+    // Fallback: skip countdown if DOM elements are missing
+    closeIntroBootstrap();
+    return;
+  }
+
+  // WHY: SVG circle circumference = 2πr = 2 * π * 82 ≈ 515
+  const CIRCUMFERENCE = 515;
+
+  overlay.hidden = false;
+  // Tiny rAF delay lets the browser paint hidden→false before adding is-active
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  overlay.classList.add('is-active');
+
+  for (let n = 5; n >= 1; n--) {
+    // Update ring: offset goes from 0 (full) to CIRCUMFERENCE (empty)
+    const offset = CIRCUMFERENCE * (1 - n / 5);
+    ringFill.style.strokeDashoffset = String(offset);
+    // Shift ring colour toward cool on the final beat for dramatic contrast
+    ringFill.style.stroke = n === 1 ? 'var(--accent-cool)' : 'var(--accent-hot)';
+
+    // Re-trigger the number animation by cloning the element
+    // WHY: Changing textContent alone doesn't restart a CSS animation on the
+    // same element; replace with a clone so the keyframe fires every tick.
+    const clone = numEl.cloneNode(false);
+    clone.textContent = String(n);
+    numEl.parentNode.replaceChild(clone, numEl);
+    domCache.countdownNumber = clone; // keep cache in sync
+
+    playCountdownBeep(n);
+    showCaption(n === 1 ? 'One — going live' : `${n}`);
+    logEvent('countdown-tick', { n });
+
+    await wait(950);
+  }
+
+  // "● LIVE" flash — brief full-screen red burst
+  const liveFlash = document.createElement('div');
+  liveFlash.className = 'countdown-live-flash';
+  liveFlash.setAttribute('aria-hidden', 'true');
+  liveFlash.textContent = '● LIVE';
+  document.body.appendChild(liveFlash);
+  showCaption('We are live');
+
+  await wait(520);
+  liveFlash.remove();
+
+  // Fade out and hide the countdown overlay
+  overlay.classList.remove('is-active');
+  await wait(200);
+  overlay.hidden = true;
+
+  closeIntroBootstrap();
+};
+
+/**
+ * Internal: boot the main broadcast after the intro sequence ends.
+ *
+ * Separated from closeIntro so both the countdown path and any fallback
+ * path reach the same boot logic without duplication.
+ */
+const closeIntroBootstrap = () => {
   prependFeedItem('Go Live confirmed. Intro gate cleared for full broadcast.');
   blastParticles();
   refreshMetrics();
   stampTime();
   scheduleAdaptiveBeat();
   registerActivity();
+};
+
+/**
+ * Close the intro gate and begin the main broadcast.
+ */
+const closeIntro = () => {
+  getElement('introGate').classList.add('is-hidden');
+  closeIntroBootstrap();
 };
 
 /**
@@ -1675,8 +1857,8 @@ const initialize = () => {
     }
   });
 
-  // Set up intro gate
-  getElement('goLiveButton').addEventListener('click', closeIntro);
+  // Set up intro gate — runs the broadcast countdown before booting the main UI
+  getElement('goLiveButton').addEventListener('click', runBroadcastCountdown);
 
   // Set up easter egg guide
   getElement('easterGuideToggle').addEventListener('click', (event) => {
@@ -1755,7 +1937,10 @@ const initialize = () => {
   }, { once: true });
 
   // Periodic feed refresh
-  setInterval(() => {
+  if (feedIntervalId !== null) {
+    clearInterval(feedIntervalId);
+  }
+  feedIntervalId = setInterval(() => {
     prependFeedItem(CONTENT.feedPool[Math.floor(Math.random() * CONTENT.feedPool.length)]);
     stampTime();
   }, CONFIG.ANIMATION.feedRefreshIntervalMs);

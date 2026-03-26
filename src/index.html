@@ -41,6 +41,22 @@
         <button id="goLiveButton">Go Live</button>
     </div>
 
+    <!-- Broadcast Countdown Overlay: Fires between Go Live and main broadcast -->
+    <div id="countdownOverlay" class="countdown-overlay" role="status" aria-live="assertive" hidden>
+        <div class="countdown-scanlines" aria-hidden="true"></div>
+        <div class="countdown-content">
+            <p class="countdown-kicker">GOING LIVE IN</p>
+            <div class="countdown-ring-wrap" aria-hidden="true">
+                <svg class="countdown-ring" viewBox="0 0 200 200">
+                    <circle class="countdown-ring-track" cx="100" cy="100" r="82"/>
+                    <circle class="countdown-ring-fill" id="countdownRingFill" cx="100" cy="100" r="82"/>
+                </svg>
+                <span class="countdown-number" id="countdownNumber">5</span>
+            </div>
+            <p class="countdown-station">HELLO WORLD BROADCAST NETWORK</p>
+        </div>
+    </div>
+
     <!-- Viral Alert Overlay: Fires when broadcast reaches critical viral threshold -->
     <div id="viralOverlay" class="viral-overlay" role="status" aria-atomic="true" hidden>
         <div class="viral-scanlines" aria-hidden="true"></div>
