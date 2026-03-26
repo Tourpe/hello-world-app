@@ -1705,6 +1705,12 @@ const runBroadcastCountdown = async () => {
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   overlay.classList.add('is-active');
 
+  // WHY: Use a local mutable ref so each tick points to the live DOM node.
+  // Capturing numEl once at the top and then calling replaceChild detaches it,
+  // making numEl.parentNode === null on the second tick and silently crashing
+  // the async loop (the bug that caused the countdown to freeze at 5).
+  let currentNumEl = numEl;
+
   for (let n = 5; n >= 1; n--) {
     // Update ring: offset goes from 0 (full) to CIRCUMFERENCE (empty)
     const offset = CIRCUMFERENCE * (1 - n / 5);
@@ -1712,13 +1718,14 @@ const runBroadcastCountdown = async () => {
     // Shift ring colour toward cool on the final beat for dramatic contrast
     ringFill.style.stroke = n === 1 ? 'var(--accent-cool)' : 'var(--accent-hot)';
 
-    // Re-trigger the number animation by cloning the element
-    // WHY: Changing textContent alone doesn't restart a CSS animation on the
-    // same element; replace with a clone so the keyframe fires every tick.
-    const clone = numEl.cloneNode(false);
-    clone.textContent = String(n);
-    numEl.parentNode.replaceChild(clone, numEl);
-    domCache.countdownNumber = clone; // keep cache in sync
+    // Re-trigger the number pop animation via void-reflow trick.
+    // WHY: Setting animation to 'none' + forcing a reflow + clearing it
+    // restarts the keyframe on the same element — no DOM replacement needed,
+    // and avoids the detached-node crash that came from cloneNode/replaceChild.
+    currentNumEl.textContent = String(n);
+    currentNumEl.style.animation = 'none';
+    void currentNumEl.offsetWidth; // force reflow so the browser resets the keyframe
+    currentNumEl.style.animation = '';
 
     playCountdownBeep(n);
     showCaption(n === 1 ? 'One — going live' : `${n}`);
